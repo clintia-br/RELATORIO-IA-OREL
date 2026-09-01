@@ -125,6 +125,34 @@
   .action-title { font-size: 13px; font-weight: 600; color: #e4e4e7; }
   .action-desc { font-size: 12px; color: #888; line-height: 1.5; }
 
+  /* Queries table */
+  .queries-table { width: 100%; border-collapse: collapse; }
+  .queries-table th {
+    text-align: left; font-size: 11px; color: #888; font-weight: 600;
+    padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    letter-spacing: 0.5px;
+  }
+  .queries-table td {
+    font-size: 13px; color: #ccc; padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+  }
+  .queries-table tr:last-child td { border-bottom: none; }
+  .query-text { color: #fff; font-weight: 500; }
+  .query-level {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px;
+    color: var(--lc); background: var(--lbg);
+  }
+  .query-result { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .qr-dot {
+    width: 20px; height: 20px; border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0;
+  }
+  .qr-dot.yes { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+  .qr-dot.no { background: rgba(255,255,255,0.03); color: #555; border: 1px solid rgba(255,255,255,0.06); }
+
   /* Footer */
   .footer {
     margin-top: 24px; padding: 16px 0;
@@ -198,6 +226,25 @@
     <div class="panel" style="margin-bottom:0">
       <h2>Diagnóstico</h2>
       <div style="margin-top:16px" id="diagnostics"></div>
+    </div>
+  </div>
+
+  <!-- Search queries -->
+  <div class="panel">
+    <h2>Pesquisas realizadas</h2>
+    <p class="panel-sub">Cada pergunta foi feita em janela limpa (sem histórico) nas 3 ferramentas. Resultados por ferramenta à direita.</p>
+    <div style="overflow-x:auto">
+      <table class="queries-table">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th>Palavra-chave / Pergunta</th>
+            <th>Nível</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody id="queriesBody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -373,6 +420,23 @@ DIAGNOSTICS.forEach(d => {
       <div class="diag-title" style="color:${d.color}">${d.title}</div>
       <div class="diag-desc">${d.desc}</div>
     </div>`;
+});
+
+// Queries table
+const queriesBody = document.getElementById("queriesBody");
+QUESTIONS.forEach((q, i) => {
+  const lc = LEVEL_COLORS[q.level];
+  const results = TOOLS.map(t => {
+    const cited = MATRIX[t.name][i];
+    return `<span title="${t.name}: ${cited ? 'Citado' : 'Não citado'}" class="qr-dot ${cited ? 'yes' : 'no'}" style="${cited ? `background:${t.color}22;color:${t.color};border-color:${t.color}55` : ''}">${cited ? '✓' : '—'}</span>`;
+  }).join("");
+  queriesBody.innerHTML += `
+    <tr>
+      <td style="color:#555;font-weight:600;font-size:12px">P${q.id}</td>
+      <td class="query-text">${q.text}</td>
+      <td><span class="query-level" style="--lc:${lc};--lbg:${lc}1a">${q.level}</span></td>
+      <td><div class="query-result">${results}</div></td>
+    </tr>`;
 });
 
 // Actions
