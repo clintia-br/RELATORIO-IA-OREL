@@ -161,18 +161,22 @@
     width: 214px; font-size: 12px; font-weight: 500; flex-shrink: 0; color: var(--ink-2);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px;
   }
-  .comp-row { display: flex; align-items: center; margin-bottom: 4px; }
+  .comp-row { display: flex; align-items: center; margin-bottom: 6px; }
   .comp-row:hover .comp-label { color: var(--ink); }
   .comp-count {
     width: 46px; text-align: right; font-size: 12px; color: var(--ink-2);
     flex-shrink: 0; padding-right: 4px; font-family: var(--serif); font-weight: 600;
   }
   .comp-cell {
-    width: 38px; height: 30px; border-radius: 3px;
+    width: 40px; height: 40px; border-radius: 3px;
     display: flex; align-items: center; justify-content: center; gap: 3px;
   }
-  .comp-cell.empty { background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.04); }
-  .comp-cell.filled { background: var(--inner); border: 1px solid var(--line); }
+  .comp-cell.empty {
+    border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.015); color: #4C4439;
+  }
+  .comp-cell.filled {
+    border: 1px solid rgba(217,177,94,0.5); background: rgba(217,177,94,0.15);
+  }
   .comp-dot { width: 7px; height: 7px; border-radius: 50%; }
 
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
@@ -298,7 +302,7 @@
     <div class="panel">
       <h2>Matriz de citação — Concorrentes</h2>
       <div class="hr"></div>
-      <p class="panel-sub">Em qual pergunta cada concorrente foi citado, e por qual ferramenta. Ordenados por total de citações.</p>
+      <p class="panel-sub">Mesma leitura da matriz acima: célula dourada = citado. Os pontos dentro da célula dizem quais IAs citaram. Ordenados por total de citações.</p>
       <div class="heatmap-wrapper"><div id="compMatrix"></div></div>
       <div class="legend" id="compToolLegend"></div>
     </div>
@@ -522,7 +526,7 @@ compSorted.forEach(comp => {
   QUESTIONS.forEach((q, i) => {
     const cited = TOOLS.filter(t => comp.matrix[t.name][i]);
     if (cited.length === 0) {
-      cells += `<div class="heatmap-cell-wrap"><div class="comp-cell empty" title="${comp.name} · P${q.id}: não citado"><span style="color:#3D362D;font-size:11px">—</span></div></div>`;
+      cells += `<div class="heatmap-cell-wrap"><div class="comp-cell empty" title="${comp.name} · P${q.id}: não citado"><span style="font-size:15px">—</span></div></div>`;
     } else {
       const dots = cited.map(t => `<div class="comp-dot" style="background:${t.color}"></div>`).join('');
       const tip = `${comp.name} · P${q.id} "${q.text}" — citado em ${cited.map(t => t.name).join(', ')}`;
@@ -536,6 +540,9 @@ QUESTIONS.forEach(q => { cl += `<div style="width:46px;text-align:center;font-si
 cl += '</div>';
 cm.innerHTML += cl;
 
+document.getElementById("compToolLegend").innerHTML =
+  `<div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(217,177,94,0.5);background:rgba(217,177,94,0.15)"></div>Citado</div>
+   <div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.015)"></div>Não citado</div>`;
 TOOLS.forEach(t => {
   document.getElementById("compToolLegend").innerHTML += `<div class="legend-item"><div class="legend-dot round" style="background:${t.color}"></div><span style="font-size:12px;color:#A99C88">${t.name}</span></div>`;
 });
