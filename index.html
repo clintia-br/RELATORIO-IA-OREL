@@ -119,6 +119,7 @@
   }
   .queries-table tr:last-child td { border-bottom: none; }
   .queries-table tbody tr { cursor: pointer; transition: background 0.12s; }
+  .queries-table.static tbody tr { cursor: default; }
   .queries-table tbody tr:hover { background: var(--inner); }
   .query-text { color: var(--ink); font-weight: 500; }
   .qnum { color: var(--ink-3); font-weight: 600; font-size: 11px; font-family: var(--serif); }
@@ -157,27 +158,16 @@
   .col-label { width: 46px; text-align: center; font-size: 9px; color: var(--ink-3); line-height: 1.35; padding: 0 2px; }
   .col-labels { margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
 
-  .comp-label {
-    width: 214px; font-size: 12px; font-weight: 500; flex-shrink: 0; color: var(--ink-2);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px;
+  /* Células de citação na tabela de concorrentes — mesma caixa dos ✓ da tabela acima */
+  .cite-box {
+    width: 34px; height: 24px; border-radius: 3px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+    font-size: 11px;
   }
-  .comp-row { display: flex; align-items: center; margin-bottom: 6px; }
-  .comp-row:hover .comp-label { color: var(--ink); }
-  .comp-count {
-    width: 46px; text-align: right; font-size: 12px; color: var(--ink-2);
-    flex-shrink: 0; padding-right: 4px; font-family: var(--serif); font-weight: 600;
-  }
-  .comp-cell {
-    width: 40px; height: 40px; border-radius: 3px;
-    display: flex; align-items: center; justify-content: center; gap: 3px;
-  }
-  .comp-cell.empty {
-    border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.015); color: #4C4439;
-  }
-  .comp-cell.filled {
-    border: 1px solid rgba(217,177,94,0.5); background: rgba(217,177,94,0.15);
-  }
-  .comp-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .cite-box.yes { background: rgba(217,177,94,0.16); border: 1px solid rgba(217,177,94,0.42); }
+  .cite-box.no { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); color: #5A5145; }
+  .cite-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .comp-total { font-family: var(--serif); font-size: 14px; font-weight: 600; color: var(--gold); }
 
   .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
   .legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--ink-3); }
@@ -300,10 +290,15 @@
     </div>
 
     <div class="panel">
-      <h2>Matriz de citação — Concorrentes</h2>
+      <h2>Citações por concorrente</h2>
       <div class="hr"></div>
-      <p class="panel-sub">Mesma leitura da matriz acima: célula dourada = citado. Os pontos dentro da célula dizem quais IAs citaram. Ordenados por total de citações.</p>
-      <div class="heatmap-wrapper"><div id="compMatrix"></div></div>
+      <p class="panel-sub">Mesma leitura da tabela de pesquisas: caixa dourada = citado. Os pontos dentro da caixa dizem quais IAs citaram. Ordenados por total de citações.</p>
+      <div style="overflow-x:auto">
+        <table class="queries-table static">
+          <thead id="compHead"></thead>
+          <tbody id="compBody"></tbody>
+        </table>
+      </div>
       <div class="legend" id="compToolLegend"></div>
     </div>
 
@@ -510,39 +505,40 @@ document.getElementById("citedLegend").innerHTML =
   `<div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(217,177,94,0.5);background:rgba(217,177,94,0.15)"></div>Citado</div>
    <div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.015)"></div>Não citado</div>`;
 
-// Matriz de concorrentes
-const cm = document.getElementById("compMatrix");
+// Tabela de concorrentes
 const compSorted = COMPETITORS
   .map(c => ({...c, total: Object.values(c.matrix).flat().filter(Boolean).length}))
   .sort((a,b) => b.total - a.total);
 
-let ch = '<div style="display:flex;padding-left:214px;margin-bottom:8px">';
-QUESTIONS.forEach(q => { ch += `<div style="width:46px;text-align:center;font-size:10px;font-weight:700;font-family:var(--serif);color:${LEVEL_COLORS[q.level]}">P${q.id}</div>`; });
-ch += '<div style="width:46px;text-align:right;font-size:9px;color:#8E8273;padding-right:4px;letter-spacing:1px;text-transform:uppercase">Total</div></div>';
-cm.innerHTML = ch;
+document.getElementById("compHead").innerHTML =
+  `<tr><th style="width:34px">#</th><th>Concorrente</th>` +
+  QUESTIONS.map(q =>
+    `<th style="text-align:center;color:${LEVEL_COLORS[q.level]}" title="P${q.id} — ${q.text}">P${q.id}</th>`
+  ).join('') +
+  `<th style="text-align:center">Total</th></tr>`;
 
-compSorted.forEach(comp => {
-  let cells = '';
-  QUESTIONS.forEach((q, i) => {
+const compBody = document.getElementById("compBody");
+compSorted.forEach((comp, idx) => {
+  const cells = QUESTIONS.map((q, i) => {
     const cited = TOOLS.filter(t => comp.matrix[t.name][i]);
     if (cited.length === 0) {
-      cells += `<div class="heatmap-cell-wrap"><div class="comp-cell empty" title="${comp.name} · P${q.id}: não citado"><span style="font-size:15px">—</span></div></div>`;
-    } else {
-      const dots = cited.map(t => `<div class="comp-dot" style="background:${t.color}"></div>`).join('');
-      const tip = `${comp.name} · P${q.id} "${q.text}" — citado em ${cited.map(t => t.name).join(', ')}`;
-      cells += `<div class="heatmap-cell-wrap"><div class="comp-cell filled" title="${tip}">${dots}</div></div>`;
+      return `<td style="text-align:center"><span class="cite-box no" title="${comp.name} · P${q.id}: não citado">—</span></td>`;
     }
-  });
-  cm.innerHTML += `<div class="comp-row"><div class="comp-label" title="${comp.name}">${comp.name}</div>${cells}<div class="comp-count">${comp.total}</div></div>`;
+    const dots = cited.map(t => `<span class="cite-dot" style="background:${t.color}"></span>`).join('');
+    const tip = `${comp.name} · P${q.id} “${q.text}” — citado em ${cited.map(t => t.name).join(', ')}`;
+    return `<td style="text-align:center"><span class="cite-box yes" title="${tip}">${dots}</span></td>`;
+  }).join('');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="qnum">${idx + 1}</td>
+    <td class="query-text">${comp.name}</td>
+    ${cells}
+    <td style="text-align:center"><span class="comp-total">${comp.total}</span></td>`;
+  compBody.appendChild(tr);
 });
-let cl = '<div style="display:flex;padding-left:214px;margin-top:10px;border-top:1px solid rgba(217,177,94,0.07);padding-top:10px">';
-QUESTIONS.forEach(q => { cl += `<div style="width:46px;text-align:center;font-size:9px;color:#8E8273;line-height:1.35;padding:0 2px">${q.short}</div>`; });
-cl += '</div>';
-cm.innerHTML += cl;
 
 document.getElementById("compToolLegend").innerHTML =
-  `<div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(217,177,94,0.5);background:rgba(217,177,94,0.15)"></div>Citado</div>
-   <div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.015)"></div>Não citado</div>`;
+  `<div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(217,177,94,0.42);background:rgba(217,177,94,0.16)"></div>Citado</div>
+   <div class="legend-item"><div class="legend-cell" style="border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02)"></div>Não citado</div>`;
 TOOLS.forEach(t => {
   document.getElementById("compToolLegend").innerHTML += `<div class="legend-item"><div class="legend-dot round" style="background:${t.color}"></div><span style="font-size:12px;color:#A99C88">${t.name}</span></div>`;
 });
