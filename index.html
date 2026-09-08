@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diagnóstico de Citação por IA — Dr. Maurício Orel</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -12,253 +12,198 @@
     background: #0f1117;
     color: #e4e4e7;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    padding: 32px 24px;
     -webkit-font-smoothing: antialiased;
   }
-  .container { max-width: 900px; margin: 0 auto; }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
-  /* Header */
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; margin-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .nav-tab {
+    padding: 10px 18px; font-size: 13px; font-weight: 600; color: #888;
+    cursor: pointer; border: none; border-bottom: 2px solid transparent;
+    transition: all 0.15s; background: none;
+  }
+  .nav-tab:hover { color: #ccc; }
+  .nav-tab.active { color: #fff; border-bottom-color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
   .eyebrow { font-size: 11px; color: #888; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600; }
   h1 { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.2; }
-  .subtitle { font-size: 14px; color: #888; margin-top: 8px; line-height: 1.5; }
+  .subtitle { font-size: 14px; color: #888; margin-top: 8px; line-height: 1.5; max-width: 640px; }
 
-  /* Score cards */
-  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 32px 0; }
-  .score-card {
-    background: rgba(255,255,255,0.04);
-    border-radius: 12px;
-    padding: 20px 24px;
-    border-left: 3px solid var(--accent);
-  }
-  .score-card .value { font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1.1; }
-  .score-card .label { font-size: 14px; color: #ccc; margin-top: 6px; font-weight: 500; }
-  .score-card .sub { font-size: 12px; color: #888; margin-top: 4px; }
-
-  /* Panels */
-  .panel {
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-  }
+  .panel { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
   .panel h2 { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
   .panel .panel-sub { font-size: 12px; color: #888; margin-bottom: 20px; }
 
-  /* Heatmap */
+  .method-box {
+    background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.12);
+    border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;
+    font-size: 13px; color: #94a3b8; line-height: 1.6;
+  }
+  .method-box strong { color: #93c5fd; }
+
+  .queries-table { width: 100%; border-collapse: collapse; }
+  .queries-table th {
+    text-align: left; font-size: 11px; color: #888; font-weight: 600;
+    padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); letter-spacing: 0.5px;
+  }
+  .queries-table td {
+    font-size: 13px; color: #ccc; padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle;
+  }
+  .queries-table tr:last-child td { border-bottom: none; }
+  .queries-table tbody tr { cursor: pointer; transition: background 0.1s; }
+  .queries-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+  .query-text { color: #fff; font-weight: 500; }
+  .query-level { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .qr-dot {
+    width: 22px; height: 22px; border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 11px;
+  }
+  .qr-dot.yes { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+  .qr-dot.no { background: rgba(255,255,255,0.03); color: #555; border: 1px solid rgba(255,255,255,0.06); }
+
   .heatmap-wrapper { overflow-x: auto; }
-  .heatmap-table { min-width: 500px; }
   .heatmap-row { display: flex; align-items: center; margin-bottom: 6px; }
-  .heatmap-label { width: 120px; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .heatmap-label { width: 140px; font-size: 13px; font-weight: 600; flex-shrink: 0; }
   .heatmap-cell-wrap { width: 44px; display: flex; justify-content: center; }
   .heatmap-cell {
-    width: 40px; height: 40px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; transition: all 0.15s; cursor: default;
+    width: 38px; height: 38px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
   }
-  .heatmap-cell.cited { border: 1.5px solid var(--tool-color); background: var(--tool-bg); color: #e4e4e7; }
-  .heatmap-cell.not-cited { border: 1.5px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.03); color: #555; }
+  .heatmap-cell.cited { border: 1.5px solid var(--tc); background: var(--tbg); color: #e4e4e7; }
+  .heatmap-cell.not-cited { border: 1.5px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color: #444; }
+  .col-headers, .col-labels { display: flex; padding-left: 140px; }
+  .col-header { width: 44px; text-align: center; font-size: 10px; font-weight: 600; }
+  .col-label { width: 44px; text-align: center; font-size: 9px; color: #555; line-height: 1.3; }
+  .col-labels { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
 
-  .col-headers, .col-labels { display: flex; padding-left: 120px; }
-  .col-header { width: 44px; text-align: center; font-size: 10px; font-weight: 600; cursor: default; transition: color 0.15s; }
-  .col-label { width: 44px; text-align: center; font-size: 9px; color: #666; line-height: 1.3; }
-  .col-labels { margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; }
+  .comp-label { width: 220px; font-size: 12px; font-weight: 500; flex-shrink: 0; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .comp-row { display: flex; align-items: center; margin-bottom: 5px; }
+  .comp-count { width: 50px; text-align: right; font-size: 11px; color: #888; flex-shrink: 0; padding-right: 4px; }
+  .comp-cell {
+    width: 36px; height: 28px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+  }
+  .comp-cell.empty { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); }
+  .comp-cell.filled { background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.15); }
 
-  /* Legends */
   .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #888; }
   .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
   .legend-dot.round { border-radius: 50%; width: 10px; height: 10px; }
 
-  /* Tooltip */
-  .tooltip-bar {
-    background: rgba(251,191,36,0.08);
-    border: 1px solid rgba(251,191,36,0.2);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 24px;
-    font-size: 13px;
-    color: #fbbf24;
-    display: none;
-  }
-  .tooltip-bar.visible { display: block; }
-  .tooltip-bar .tq { color: #888; margin-left: 8px; }
+  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .score-card { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 20px 24px; border-left: 3px solid var(--accent); }
+  .score-card .value { font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+  .score-card .label { font-size: 14px; color: #ccc; margin-top: 6px; font-weight: 500; }
+  .score-card .sub { font-size: 12px; color: #888; margin-top: 4px; }
 
-  /* Two-col */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
-
-  /* Competitor bars */
-  .comp { margin-bottom: 12px; }
-  .comp-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-  .comp-name { font-size: 13px; color: #ddd; font-weight: 500; }
-  .comp-tag {
-    margin-left: 8px; font-size: 10px;
-    background: rgba(239,68,68,0.2); color: #f87171;
-    padding: 2px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.3px;
-  }
-  .comp-count { font-size: 12px; color: #888; }
-  .comp-bar-wrap { display: flex; gap: 4px; align-items: center; }
-  .comp-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
-  .comp-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
-  .comp-dots { display: flex; gap: 3px; margin-left: 8px; }
-  .comp-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-  /* Diagnostic cards */
   .diag-card { border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  .diag-card:last-child { margin-bottom: 0; }
   .diag-card .diag-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
   .diag-card .diag-desc { font-size: 12px; color: #aaa; line-height: 1.5; }
 
-  /* Action items */
-  .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
-  .action-card {
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    padding: 14px 16px;
-    border-left: 3px solid var(--accent);
-  }
-  .action-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .action-tag {
-    font-size: 10px; font-weight: 700;
-    color: var(--accent); background: var(--accent-bg);
-    padding: 2px 8px; border-radius: 4px;
-  }
-  .action-title { font-size: 13px; font-weight: 600; color: #e4e4e7; }
-  .action-desc { font-size: 12px; color: #888; line-height: 1.5; }
+  .detail-card { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .detail-card h3 { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .detail-meta { font-size: 12px; color: #888; margin-bottom: 16px; }
+  .detail-tool { margin-bottom: 14px; padding: 12px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid var(--tc); }
+  .detail-tool-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .detail-tool-status { font-size: 12px; color: #aaa; margin-bottom: 4px; }
+  .detail-tool-names { font-size: 12px; color: #888; line-height: 1.5; }
+  .detail-tool-names span { color: #ccc; }
+  .placeholder-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(251,191,36,0.12); color: #fbbf24; }
 
-  /* Queries table */
-  .queries-table { width: 100%; border-collapse: collapse; }
-  .queries-table th {
-    text-align: left; font-size: 11px; color: #888; font-weight: 600;
-    padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.08);
-    letter-spacing: 0.5px;
-  }
-  .queries-table td {
-    font-size: 13px; color: #ccc; padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    vertical-align: top;
-  }
-  .queries-table tr:last-child td { border-bottom: none; }
-  .query-text { color: #fff; font-weight: 500; }
-  .query-level {
-    display: inline-block; font-size: 10px; font-weight: 600;
-    padding: 2px 8px; border-radius: 4px;
-    color: var(--lc); background: var(--lbg);
-  }
-  .query-result { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .qr-dot {
-    width: 20px; height: 20px; border-radius: 4px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; flex-shrink: 0;
-  }
-  .qr-dot.yes { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
-  .qr-dot.no { background: rgba(255,255,255,0.03); color: #555; border: 1px solid rgba(255,255,255,0.06); }
+  .cta-box { background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.15); border-radius: 8px; padding: 16px 20px; font-size: 13px; color: #a78bfa; line-height: 1.6; }
+  .cta-box strong { color: #c4b5fd; }
 
-  /* Footer */
-  .footer {
-    margin-top: 24px; padding: 16px 0;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    display: flex; justify-content: space-between;
-    font-size: 11px; color: #555;
-    flex-wrap: wrap; gap: 8px;
-  }
+  .footer { margin-top: 24px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; font-size: 11px; color: #555; flex-wrap: wrap; gap: 8px; }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <!-- Header -->
-  <div class="eyebrow">DIAGNÓSTICO DE VISIBILIDADE IA</div>
-  <h1>Dr. Maurício Orel</h1>
-  <p class="subtitle">Citação em ChatGPT, Gemini e Perplexity — 7 perguntas por ferramenta, do específico ao genérico.</p>
-
-  <!-- Score cards -->
-  <div class="scores">
-    <div class="score-card" style="--accent:#f87171">
-      <div class="value">19%</div>
-      <div class="label">Visibilidade geral</div>
-      <div class="sub">4 de 21 testes</div>
-    </div>
-    <div class="score-card" style="--accent:#ef4444">
-      <div class="value">0/15</div>
-      <div class="label">Citações genéricas</div>
-      <div class="sub">Perguntas sem nome dele</div>
-    </div>
-    <div class="score-card" style="--accent:#fbbf24">
-      <div class="value">0/3</div>
-      <div class="label">Pós-bariátrica SP</div>
-      <div class="sub">Pergunta-chave do nicho</div>
-    </div>
-    <div class="score-card" style="--accent:#8b5cf6">
-      <div class="value">8</div>
-      <div class="label">Concorrentes à frente</div>
-      <div class="sub">Citados em 2+ ferramentas</div>
-    </div>
+  <div style="margin-bottom: 24px;">
+    <div class="eyebrow">DIAGNÓSTICO DE VISIBILIDADE IA</div>
+    <h1>Dr. Maurício Orel</h1>
+    <p class="subtitle">Citação em ChatGPT, Gemini e Perplexity — 7 perguntas por ferramenta, do específico ao genérico.</p>
   </div>
 
-  <!-- Heatmap -->
-  <div class="panel">
-    <h2>Matriz de citação</h2>
-    <p class="panel-sub">Cada célula = uma pergunta feita a uma IA. Check = Maurício citado.</p>
-    <div class="heatmap-wrapper">
-      <div class="heatmap-table">
+  <div class="nav">
+    <button class="nav-tab active" data-tab="geral">Visão Geral</button>
+    <button class="nav-tab" data-tab="detalhes">Detalhes por Pergunta</button>
+  </div>
+
+  <!-- ===== VISÃO GERAL ===== -->
+  <div class="tab-content active" id="tab-geral">
+
+    <div class="method-box">
+      <strong>Metodologia:</strong> Cada pergunta foi feita em <strong>janela limpa</strong> (aba anônima, sem histórico de conversa anterior) nas três ferramentas, simulando a pesquisa real de um paciente partindo do zero. As perguntas vão do nível mais específico (nome do médico) até o mais genérico (mercado nacional). Para validar, abra uma aba anônima na ferramenta e faça a mesma pergunta — o resultado será semelhante.
+    </div>
+
+    <div class="panel">
+      <h2>Pesquisas realizadas</h2>
+      <p class="panel-sub">7 perguntas × 3 ferramentas = 21 testes. Clique numa linha para ver o detalhe completo da resposta.</p>
+      <div style="overflow-x:auto">
+        <table class="queries-table">
+          <thead><tr>
+            <th style="width:36px">#</th>
+            <th>Pergunta pesquisada</th>
+            <th>Nível</th>
+            <th style="text-align:center">ChatGPT</th>
+            <th style="text-align:center">Gemini</th>
+            <th style="text-align:center">Perplexity</th>
+          </tr></thead>
+          <tbody id="queriesBody"></tbody>
+        </table>
+      </div>
+      <div class="legend" id="levelLegend"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Matriz de citação — Dr. Maurício Orel</h2>
+      <p class="panel-sub">Cada célula = uma pergunta feita a uma IA. Check = Maurício citado na resposta.</p>
+      <div class="heatmap-wrapper">
         <div class="col-headers" id="colHeaders"></div>
         <div id="heatmapRows"></div>
         <div class="col-labels" id="colLabels"></div>
       </div>
-    </div>
-    <div class="legend" id="levelLegend"></div>
-  </div>
-
-  <!-- Tooltip -->
-  <div class="tooltip-bar" id="tooltip"></div>
-
-  <!-- Two columns -->
-  <div class="two-col">
-    <!-- Competitors -->
-    <div class="panel" style="margin-bottom:0">
-      <h2>Concorrentes citados em 2+ IAs</h2>
-      <p class="panel-sub">Quem aparece onde o Maurício não aparece</p>
-      <div class="legend" id="toolLegend" style="margin-top:0;margin-bottom:16px"></div>
-      <div id="competitors"></div>
+      <div class="legend" id="toolLegend"></div>
     </div>
 
-    <!-- Diagnostic -->
-    <div class="panel" style="margin-bottom:0">
+    <div class="panel">
+      <h2>Matriz de citação — Concorrentes</h2>
+      <p class="panel-sub">Em qual pergunta cada concorrente foi citado, por ferramenta. Ordenados por total de citações.</p>
+      <div class="heatmap-wrapper"><div id="compMatrix"></div></div>
+      <div class="legend" id="compToolLegend" style="margin-top:12px"></div>
+    </div>
+
+    <div class="panel">
       <h2>Diagnóstico</h2>
-      <div style="margin-top:16px" id="diagnostics"></div>
+      <p class="panel-sub">Achados principais do estudo.</p>
+      <div id="diagnostics"></div>
+    </div>
+
+    <div class="scores" id="scoresSection"></div>
+
+    <div class="cta-box">
+      <strong>Próximo passo:</strong> Essas são as principais perguntas que identificamos como relevantes para mapear o posicionamento do Dr. Maurício nas ferramentas de IA. Se tiverem outras perguntas específicas que consideram importantes — do tipo que seus pacientes fariam — manda pra gente que rodamos uma nova leva com a mesma metodologia e atualizamos este relatório.
+    </div>
+
+    <div class="footer">
+      <span>ClintIA Soluções Tecnológicas</span>
+      <span>04/set/2026 — Dados coletados em janela limpa (93 prints)</span>
     </div>
   </div>
 
-  <!-- Search queries -->
-  <div class="panel">
-    <h2>Pesquisas realizadas</h2>
-    <p class="panel-sub">Cada pergunta foi feita em janela limpa (sem histórico) nas 3 ferramentas. Resultados por ferramenta à direita.</p>
-    <div style="overflow-x:auto">
-      <table class="queries-table">
-        <thead>
-          <tr>
-            <th style="width:36px">#</th>
-            <th>Palavra-chave / Pergunta</th>
-            <th>Nível</th>
-            <th>Resultado</th>
-          </tr>
-        </thead>
-        <tbody id="queriesBody"></tbody>
-      </table>
-    </div>
+  <!-- ===== DETALHES POR PERGUNTA ===== -->
+  <div class="tab-content" id="tab-detalhes">
+    <p style="font-size:13px;color:#888;margin-bottom:20px">Clique em "Visão Geral" para voltar ao resumo. Cada pergunta mostra o que cada ferramenta respondeu e quais concorrentes apareceram.</p>
+    <div id="detailCards"></div>
+    <div class="footer"><span>ClintIA Soluções Tecnológicas</span><span>Set 2026</span></div>
   </div>
 
-  <!-- Action plan -->
-  <div class="panel">
-    <h2 style="margin-bottom:16px">Plano de ação</h2>
-    <div class="actions-grid" id="actions"></div>
-  </div>
-
-  <!-- Footer -->
-  <div class="footer">
-    <span>ClintIA Soluções Tecnológicas</span>
-    <span>Ago 2026 — Dados coletados em janela limpa (sem histórico)</span>
-  </div>
 </div>
 
 <script>
@@ -267,6 +212,8 @@ const TOOLS = [
   { name: "Gemini", color: "#8b5cf6" },
   { name: "Perplexity", color: "#3b82f6" },
 ];
+const LEVEL_COLORS = { "Específico":"#4ade80", "Intermediário":"#fbbf24", "Amplo":"#f87171", "Muito amplo":"#ef4444" };
+const toolColor = n => TOOLS.find(t => t.name === n)?.color || "#888";
 
 const QUESTIONS = [
   { id:1, text:"Quem é Maurício Orel, cirurgião plástico?", level:"Específico", short:"Nome direto" },
@@ -278,178 +225,220 @@ const QUESTIONS = [
   { id:7, text:"Melhores cirurgiões pós-bariátricos do Brasil", level:"Muito amplo", short:"Top Brasil" },
 ];
 
-const MATRIX = {
+// =============================================
+// DADOS — Extraídos dos 93 prints (04/set/2026)
+// =============================================
+
+const MAURICIO = {
   ChatGPT:    [true, true, false, false, false, false, false],
-  Gemini:     [true, false, false, false, false, false, false],
+  Gemini:     [true, true, false, false, false, false, false],
   Perplexity: [true, true, false, false, false, false, false],
 };
 
-const LEVEL_COLORS = { "Específico":"#4ade80", "Intermediário":"#fbbf24", "Amplo":"#f87171", "Muito amplo":"#ef4444" };
-
 const COMPETITORS = [
-  { name:"Dr. André Araújo", tools:["ChatGPT","Gemini","Perplexity"], count:3, tag:"Líder absoluto" },
-  { name:"Dr. Moacyr Pires de Mello Filho", tools:["ChatGPT","Gemini","Perplexity"], count:3 },
-  { name:"Dra. Thamy Motoki", tools:["ChatGPT","Perplexity"], count:2 },
-  { name:"Dr. Juan Montano", tools:["Gemini","Perplexity"], count:2 },
-  { name:"Dr. Henrique Lopes Arantes", tools:["ChatGPT","Gemini"], count:2 },
-  { name:"Dr. Orlando Ferrari", tools:["ChatGPT","Gemini"], count:2 },
-  { name:"Dr. Daniel Debastiani", tools:["ChatGPT","Gemini"], count:2 },
-  { name:"Dr. Guilherme Teixeira", tools:["ChatGPT","Perplexity"], count:2 },
+  { name:"Dr. André Araújo", matrix:{ ChatGPT:[false,false,true,true,true,true,false], Gemini:[false,false,false,true,true,false,true], Perplexity:[false,false,false,false,false,false,true] }},
+  { name:"Dr. Tiago Costa", matrix:{ ChatGPT:[false,false,false,true,true,true,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Dr. Henrique Lopes Arantes", matrix:{ ChatGPT:[false,false,false,true,true,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Dra. Thamy Motoki", matrix:{ ChatGPT:[false,false,false,false,true,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Dr. Fernando Amato", matrix:{ ChatGPT:[false,false,false,false,true,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Dr. Rodrigo Otávio Carbone", matrix:{ ChatGPT:[false,false,false,false,true,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Dr. Moacyr Pires de Mello Filho", matrix:{ ChatGPT:[false,false,false,false,false,false,false], Gemini:[false,false,false,true,true,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Dr. Juan Montano", matrix:{ ChatGPT:[false,false,false,false,false,false,false], Gemini:[false,false,false,false,true,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+  { name:"Clínica Orvia", matrix:{ ChatGPT:[false,false,false,false,false,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,true,true,true,true] }},
+  { name:"Dr. André Chao / Guilherme Teixeira", matrix:{ ChatGPT:[false,false,false,false,false,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,true,false,true] }},
+  { name:"Dr. Flávio Mendes", matrix:{ ChatGPT:[false,false,false,false,false,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,true] }},
+  { name:"Dream Plastic", matrix:{ ChatGPT:[false,false,true,false,false,false,false], Gemini:[false,false,false,false,false,false,false], Perplexity:[false,false,false,false,false,false,false] }},
+];
+
+// Detalhes por pergunta — extraídos dos prints
+const Q_DETAILS = [
+  [ // P1
+    { tool:"ChatGPT", cited:true, summary:"CRM-SP 105098, RQE 26412. Faculdade ABC, USP, SBCP, ASPS. Mencionou Protocolo Orel 360.", names:[] },
+    { tool:"Gemini", cited:true, summary:"Cirurgião plástico em SP, Higienópolis. Hospital São Luiz Itaim, Beneficência Portuguesa, Hospital BP.", names:[] },
+    { tool:"Perplexity", cited:true, summary:"Mais completa: CRM-SP 105099, RQE 26412/26411, Body Sculpting, Orel 360, áreas de interesse detalhadas.", names:[] },
+  ],
+  [ // P2
+    { tool:"ChatGPT", cited:true, summary:"Mostrou mapa com Clínica Orel Plástica (5.0★). Citou Dr. Maurício e Dr. Milton Orel. Doctoralia 66 opiniões 5/5.", names:["Dr. Milton Orel"] },
+    { tool:"Gemini", cited:true, summary:"Identificou como estabelecimento multiespecialidade em Higienópolis. Listou especialidades: cirurgia plástica, otorrino, odontologia, nutrição.", names:[] },
+    { tool:"Perplexity", cited:true, summary:"Detalhes completos: endereço, telefones, equipe (Dr. Maurício, Dr. Milton, Dr. Rubens, Dra. Tala Justa Orel).", names:["Dr. Milton Orel","Dr. Rubens Orel","Dra. Tala Justa Orel"] },
+  ],
+  [ // P3
+    { tool:"ChatGPT", cited:false, summary:"Mostrou mapa com clínicas. Listou nomes com cards visuais e avaliações.", names:["Dream Plastic","Dr. Thomas Benson","SER Cirurgia Plástica","Dr. André Araújo","Adriano Brandin","Perfekta Plástica"] },
+    { tool:"Gemini", cited:false, summary:"Resposta genérica sobre SP como polo de cirurgia plástica. Orientações de verificação SBCP, sem nomes específicos.", names:[] },
+    { tool:"Perplexity", cited:false, summary:"Mencionou regiões (Jardins, Itaim, Moema, Higienópolis). Hospital Sírio-Libanês. Orientações de verificação CRM/RQE.", names:[] },
+  ],
+  [ // P4
+    { tool:"ChatGPT", cited:false, summary:"Foco em pós-bariátrica. Citou nomes com SBCP/RQE verificados.", names:["Dr. André Araújo","Dr. Tiago Costa","Dr. Henrique Lopes Arantes"] },
+    { tool:"Gemini", cited:false, summary:"Conteúdo educativo sobre procedimentos, depois referências e cobertura SUS.", names:["Dr. André Araújo","Dr. Moacyr Pires de Mello Filho"] },
+    { tool:"Perplexity", cited:false, summary:"Educativo: quando operar (12-18 meses), custos (R$10-22k), plataformas de busca.", names:["Clínica SER","Clínica Orvia"] },
+  ],
+  [ // P5
+    { tool:"ChatGPT", cited:false, summary:"Lista detalhada com credenciais. Thamy Motoki destacada como coordenadora do Dept. Pós-Bariátrica do Hospital SP.", names:["Dr. André Araújo","Dr. Tiago Costa","Dr. Henrique Lopes Arantes","Dr. Fernando Amato","Dra. Thamy Motoki","Dr. Rodrigo Otávio Carbone"] },
+    { tool:"Gemini", cited:false, summary:"Citou profissionais e equipes de destaque com foco em experiência específica.", names:["Dr. André Araújo","Dr. Juan Montano","Dr. Moacyr Pires de Mello Filho"] },
+    { tool:"Perplexity", cited:false, summary:"Lista com especialidades e localizações. Instituto Medicina em Foco (Sírio-Libanês, Santa Casa).", names:["Dr. André Chao","Dr. Guilherme Teixeira","Dr. Fábio Olten","Dr. Leonardo Caetano","Dr. André Nishimura","Clínica Orvia"] },
+  ],
+  [ // P6
+    { tool:"ChatGPT", cited:false, summary:"Procedimentos mais procurados (abdominoplastia, lifting braços, mastopexia). Nomes repetidos de P5.", names:["Dr. André Araújo","Dr. Tiago Costa","Clínica Magna Cirurgias"] },
+    { tool:"Gemini", cited:false, summary:"Foco em critérios de escolha: RQE, SBCP, 12-24 meses pós-bariátrica, equipe multidisciplinar.", names:[] },
+    { tool:"Perplexity", cited:false, summary:"Santa Casa/UADI, UNIFESP, Sírio-Libanês como referências hospitalares. Clínica Orvia (Zona Sul).", names:["Clínica Orvia","Dr. Juan Moreno"] },
+  ],
+  [ // P7
+    { tool:"ChatGPT", cited:false, summary:"Não citou nomes específicos. Listou cidades (SP, BH, Curitiba, RJ, Belém, Salvador) com orientações genéricas por região.", names:[] },
+    { tool:"Gemini", cited:false, summary:"Citou André Araújo como destaque. Mencionou Trilha SBCP e regiões Sudeste como referência.", names:["Dr. André Araújo"] },
+    { tool:"Perplexity", cited:false, summary:"Lista mais extensa: nomes de SP, RJ, MG. Hospitais universitários (USP, UERJ, UFPR, Sarah Kubitschek). Clínica Orvia mencionada novamente.", names:["Dr. Flávio Mendes","Dr. André Araújo","Dr. Alexandre Charão","Dr. Giancarlo Dall'Olio","Dra. Daniela Cunha","Dr. Geraldo Antônio Capeletti","Clínica Orvia"] },
+  ],
 ];
 
 const DIAGNOSTICS = [
   { color:"#f87171", bg:"rgba(239,68,68,0.08)", border:"rgba(239,68,68,0.15)", title:"Invisível no nicho-chave", desc:"Zero citações em \"pós-bariátrica SP\" — exatamente o território do OREL 360. O nome só aparece quando já está na pergunta." },
-  { color:"#fbbf24", bg:"rgba(251,191,36,0.08)", border:"rgba(251,191,36,0.15)", title:"Dados inconsistentes entre fontes", desc:"RQE divergente, endereço \"Vila Nova Conceição\" fantasma no Gemini. Isso reduz confiança dos modelos em citá-lo." },
-  { color:"#4ade80", bg:"rgba(74,222,128,0.08)", border:"rgba(74,222,128,0.15)", title:"Ativo de autoridade subutilizado", desc:"Matéria Folha de S.Paulo (2018) detectada apenas pelo Perplexity. Linkagem fraca no site = sinal desperdiçado." },
-  { color:"#8b5cf6", bg:"rgba(139,92,246,0.08)", border:"rgba(139,92,246,0.15)", title:"Benchmark: Dr. André Araújo", desc:"Presente nas 3 IAs em perguntas genéricas. Instituto com nome próprio + conteúdo dedicado + múltiplas fontes externas." },
+  { color:"#fbbf24", bg:"rgba(251,191,36,0.08)", border:"rgba(251,191,36,0.15)", title:"André Araújo domina as 3 ferramentas", desc:"Único concorrente citado em ChatGPT, Gemini e Perplexity nas perguntas genéricas. SBCP 9776, RQE 32814, instituto com nome próprio." },
+  { color:"#4ade80", bg:"rgba(74,222,128,0.08)", border:"rgba(74,222,128,0.15)", title:"Gemini melhorou na P2", desc:"Na rodada anterior não citava nem a clínica. Agora identifica a Clínica Orel como multiespecialidade em Higienópolis — sinal de que dados atualizados ajudam." },
+  { color:"#8b5cf6", bg:"rgba(139,92,246,0.08)", border:"rgba(139,92,246,0.15)", title:"Clínica Orvia domina o Perplexity", desc:"Aparece em 4 das 5 perguntas genéricas no Perplexity (P4-P7). Concorrente direto em Zona Sul, SP com foco declarado em pós-bariátrica." },
+  { color:"#f87171", bg:"rgba(239,68,68,0.08)", border:"rgba(239,68,68,0.15)", title:"Padrão confirmado: nome na pergunta = citação", desc:"5 de 6 citações do Maurício só acontecem com nome dele ou da clínica na pergunta. Sem conteúdo indexável, as IAs não o encontram sozinhas." },
 ];
 
-const ACTIONS = [
-  { p:"P0", color:"#ef4444", title:"Padronizar dados em todas as plataformas", desc:"GBP, Doctoralia, site, redes sociais — mesmo RQE, endereços, especialidades." },
-  { p:"P0", color:"#ef4444", title:"Conteúdo dedicado: pós-bariátrica SP", desc:"Páginas long-form com o termo exato que as IAs buscam. Linkagem interna forte." },
-  { p:"P1", color:"#fbbf24", title:"Reforçar linkagem Folha de S.Paulo", desc:"Citar e linkar matéria de 2018 no site + Doctoralia + GBP. Sinal tier-1." },
-  { p:"P1", color:"#fbbf24", title:"Benchmark André Araújo", desc:"Auditoria de site, backlinks e fontes externas. Replicar estrutura adaptando pro OREL 360." },
-  { p:"P2", color:"#8b5cf6", title:"Testar Claude + Meta AI", desc:"Rodar mesma bateria no Claude (com login) e Meta AI (WhatsApp) para completar panorama." },
-  { p:"P2", color:"#8b5cf6", title:"Marca OREL 360 no conteúdo público", desc:"O método proprietário precisa existir como conteúdo indexável, não só em ads." },
+const SCORES = [
+  { value:"29%", label:"Visibilidade geral", sub:"6 de 21 testes", accent:"#f87171" },
+  { value:"0/15", label:"Citações genéricas", sub:"Perguntas sem nome dele", accent:"#ef4444" },
+  { value:"0/3", label:"Pós-bariátrica SP", sub:"Pergunta-chave do nicho", accent:"#fbbf24" },
+  { value:"1", label:"Concorrente em 3 IAs", sub:"Dr. André Araújo — benchmark", accent:"#8b5cf6" },
 ];
 
-// Build heatmap
-const colHeaders = document.getElementById("colHeaders");
-const colLabels = document.getElementById("colLabels");
-const heatmapRows = document.getElementById("heatmapRows");
-const tooltip = document.getElementById("tooltip");
+// =============================================
+// RENDER
+// =============================================
 
-function showTooltip(q) {
-  tooltip.innerHTML = `<strong>P${q.id}:</strong> ${q.text}<span class="tq">(${q.level})</span>`;
-  tooltip.classList.add("visible");
-}
-function hideTooltip() { tooltip.classList.remove("visible"); }
-
-QUESTIONS.forEach(q => {
-  const h = document.createElement("div");
-  h.className = "col-header";
-  h.style.color = LEVEL_COLORS[q.level];
-  h.textContent = "P" + q.id;
-  h.addEventListener("mouseenter", () => showTooltip(q));
-  h.addEventListener("mouseleave", hideTooltip);
-  colHeaders.appendChild(h);
-
-  const l = document.createElement("div");
-  l.className = "col-label";
-  l.textContent = q.short;
-  colLabels.appendChild(l);
-});
-
-TOOLS.forEach(tool => {
-  const row = document.createElement("div");
-  row.className = "heatmap-row";
-  const label = document.createElement("div");
-  label.className = "heatmap-label";
-  label.style.color = tool.color;
-  label.textContent = tool.name;
-  row.appendChild(label);
-
-  QUESTIONS.forEach((q, i) => {
-    const wrap = document.createElement("div");
-    wrap.className = "heatmap-cell-wrap";
-    const cell = document.createElement("div");
-    const cited = MATRIX[tool.name][i];
-    cell.className = "heatmap-cell " + (cited ? "cited" : "not-cited");
-    if (cited) {
-      cell.style.setProperty("--tool-color", tool.color);
-      cell.style.setProperty("--tool-bg", tool.color + "22");
-      cell.style.borderColor = tool.color;
-      cell.style.background = tool.color + "22";
-    }
-    cell.textContent = cited ? "✓" : "—";
-    cell.addEventListener("mouseenter", () => showTooltip(q));
-    cell.addEventListener("mouseleave", hideTooltip);
-    wrap.appendChild(cell);
-    row.appendChild(wrap);
+// Tabs
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
   });
-  heatmapRows.appendChild(row);
 });
+function goToDetail(i) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-tab="detalhes"]').classList.add('active');
+  document.getElementById('tab-detalhes').classList.add('active');
+  setTimeout(() => {
+    const el = document.getElementById('detail-q' + (i + 1));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
 
-// Level legend
-const levelLegend = document.getElementById("levelLegend");
-Object.entries(LEVEL_COLORS).forEach(([level, color]) => {
-  const item = document.createElement("div");
-  item.className = "legend-item";
-  item.innerHTML = `<div class="legend-dot" style="background:${color}"></div>${level}`;
-  levelLegend.appendChild(item);
-});
-
-// Tool legend
-const toolLegend = document.getElementById("toolLegend");
-TOOLS.forEach(t => {
-  const item = document.createElement("div");
-  item.className = "legend-item";
-  item.innerHTML = `<div class="legend-dot round" style="background:${t.color}"></div><span style="font-size:12px;color:#aaa">${t.name}</span>`;
-  toolLegend.appendChild(item);
-});
-
-// Competitors
-const compEl = document.getElementById("competitors");
-COMPETITORS.forEach(c => {
-  const pct = (c.count / 3) * 100;
-  const grad = c.count === 3
-    ? "linear-gradient(90deg,#ef4444,#f97316)"
-    : "linear-gradient(90deg,#fbbf24,#f59e0b)";
+// Queries table
+const qb = document.getElementById("queriesBody");
+QUESTIONS.forEach((q, i) => {
+  const lc = LEVEL_COLORS[q.level];
   const dots = TOOLS.map(t => {
-    const active = c.tools.includes(t.name);
-    return `<div class="comp-dot" style="background:${active ? t.color : 'rgba(255,255,255,0.08)'};border:1px solid ${active ? t.color : 'rgba(255,255,255,0.1)'}"></div>`;
-  }).join("");
-  compEl.innerHTML += `
-    <div class="comp">
-      <div class="comp-head">
-        <span class="comp-name">${c.name}${c.tag ? `<span class="comp-tag">${c.tag}</span>` : ""}</span>
-        <span class="comp-count">${c.count}/3 IAs</span>
-      </div>
-      <div class="comp-bar-wrap">
-        <div class="comp-track"><div class="comp-fill" style="width:${pct}%;background:${grad}"></div></div>
-        <div class="comp-dots">${dots}</div>
-      </div>
-    </div>`;
+    const c = MAURICIO[t.name][i];
+    return `<span class="qr-dot ${c?'yes':'no'}" style="${c?`background:${t.color}22;color:${t.color};border-color:${t.color}55`:''}" title="${t.name}">${c?'✓':'—'}</span>`;
+  });
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="color:#555;font-weight:600;font-size:12px">P${q.id}</td>
+    <td class="query-text">${q.text}</td>
+    <td><span class="query-level" style="color:${lc};background:${lc}1a">${q.level}</span></td>
+    <td style="text-align:center">${dots[0]}</td>
+    <td style="text-align:center">${dots[1]}</td>
+    <td style="text-align:center">${dots[2]}</td>`;
+  tr.addEventListener('click', () => goToDetail(i));
+  qb.appendChild(tr);
+});
+Object.entries(LEVEL_COLORS).forEach(([l, c]) => {
+  document.getElementById("levelLegend").innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`;
+});
+
+// Maurício heatmap
+QUESTIONS.forEach(q => {
+  document.getElementById("colHeaders").innerHTML += `<div class="col-header" style="color:${LEVEL_COLORS[q.level]}">P${q.id}</div>`;
+  document.getElementById("colLabels").innerHTML += `<div class="col-label">${q.short}</div>`;
+});
+TOOLS.forEach(tool => {
+  let cells = '';
+  QUESTIONS.forEach((q, i) => {
+    const c = MAURICIO[tool.name][i];
+    cells += `<div class="heatmap-cell-wrap"><div class="heatmap-cell ${c?'cited':'not-cited'}" style="${c?`--tc:${tool.color};--tbg:${tool.color}22;border-color:${tool.color};background:${tool.color}22`:''}">${c?'✓':'—'}</div></div>`;
+  });
+  document.getElementById("heatmapRows").innerHTML += `<div class="heatmap-row"><div class="heatmap-label" style="color:${tool.color}">${tool.name}</div>${cells}</div>`;
+});
+TOOLS.forEach(t => {
+  document.getElementById("toolLegend").innerHTML += `<div class="legend-item"><div class="legend-dot round" style="background:${t.color}"></div><span style="font-size:12px;color:#aaa">${t.name}</span></div>`;
+});
+
+// Competitor matrix
+const cm = document.getElementById("compMatrix");
+const compSorted = COMPETITORS.map(c => ({...c, total: Object.values(c.matrix).flat().filter(Boolean).length})).sort((a,b) => b.total - a.total);
+
+let ch = '<div style="display:flex;padding-left:220px;margin-bottom:8px">';
+QUESTIONS.forEach(q => { ch += `<div style="width:44px;text-align:center;font-size:10px;font-weight:600;color:${LEVEL_COLORS[q.level]}">P${q.id}</div>`; });
+ch += '<div style="width:50px;text-align:right;font-size:10px;color:#666;padding-right:4px">Total</div></div>';
+cm.innerHTML = ch;
+
+compSorted.forEach(comp => {
+  let cells = '';
+  QUESTIONS.forEach((q, i) => {
+    const cited = TOOLS.filter(t => comp.matrix[t.name][i]);
+    if (cited.length === 0) {
+      cells += `<div class="heatmap-cell-wrap"><div class="comp-cell empty"><span style="color:#333;font-size:11px">—</span></div></div>`;
+    } else {
+      const dots = cited.map(t => `<div style="width:6px;height:6px;border-radius:50%;background:${t.color}"></div>`).join('');
+      cells += `<div class="heatmap-cell-wrap"><div class="comp-cell filled">${dots}</div></div>`;
+    }
+  });
+  cm.innerHTML += `<div class="comp-row"><div class="comp-label" title="${comp.name}">${comp.name}</div>${cells}<div class="comp-count">${comp.total}</div></div>`;
+});
+let cl = '<div style="display:flex;padding-left:220px;margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">';
+QUESTIONS.forEach(q => { cl += `<div style="width:44px;text-align:center;font-size:9px;color:#555;line-height:1.3">${q.short}</div>`; });
+cl += '</div>';
+cm.innerHTML += cl;
+
+TOOLS.forEach(t => {
+  document.getElementById("compToolLegend").innerHTML += `<div class="legend-item"><div class="legend-dot round" style="background:${t.color}"></div><span style="font-size:12px;color:#aaa">${t.name}</span></div>`;
 });
 
 // Diagnostics
-const diagEl = document.getElementById("diagnostics");
 DIAGNOSTICS.forEach(d => {
-  diagEl.innerHTML += `
-    <div class="diag-card" style="background:${d.bg};border:1px solid ${d.border}">
-      <div class="diag-title" style="color:${d.color}">${d.title}</div>
-      <div class="diag-desc">${d.desc}</div>
-    </div>`;
+  document.getElementById("diagnostics").innerHTML += `<div class="diag-card" style="background:${d.bg};border:1px solid ${d.border}"><div class="diag-title" style="color:${d.color}">${d.title}</div><div class="diag-desc">${d.desc}</div></div>`;
 });
 
-// Queries table
-const queriesBody = document.getElementById("queriesBody");
+// Scores
+SCORES.forEach(s => {
+  document.getElementById("scoresSection").innerHTML += `<div class="score-card" style="--accent:${s.accent}"><div class="value">${s.value}</div><div class="label">${s.label}</div><div class="sub">${s.sub}</div></div>`;
+});
+
+// Detail cards
+const dc = document.getElementById("detailCards");
 QUESTIONS.forEach((q, i) => {
   const lc = LEVEL_COLORS[q.level];
-  const results = TOOLS.map(t => {
-    const cited = MATRIX[t.name][i];
-    return `<span title="${t.name}: ${cited ? 'Citado' : 'Não citado'}" class="qr-dot ${cited ? 'yes' : 'no'}" style="${cited ? `background:${t.color}22;color:${t.color};border-color:${t.color}55` : ''}">${cited ? '✓' : '—'}</span>`;
-  }).join("");
-  queriesBody.innerHTML += `
-    <tr>
-      <td style="color:#555;font-weight:600;font-size:12px">P${q.id}</td>
-      <td class="query-text">${q.text}</td>
-      <td><span class="query-level" style="--lc:${lc};--lbg:${lc}1a">${q.level}</span></td>
-      <td><div class="query-result">${results}</div></td>
-    </tr>`;
-});
-
-// Actions
-const actEl = document.getElementById("actions");
-ACTIONS.forEach(a => {
-  actEl.innerHTML += `
-    <div class="action-card" style="--accent:${a.color};--accent-bg:${a.color}1a">
-      <div class="action-head">
-        <span class="action-tag">${a.p}</span>
-        <span class="action-title">${a.title}</span>
-      </div>
-      <div class="action-desc">${a.desc}</div>
+  let th = '';
+  Q_DETAILS[i].forEach(d => {
+    const tc = toolColor(d.tool);
+    const si = d.cited ? '✓ Citado' : '✗ Não citado';
+    const sc = d.cited ? '#4ade80' : '#f87171';
+    const isPlaceholder = d.summary.includes('⏳');
+    const nh = d.names.length > 0
+      ? `<div class="detail-tool-names" style="margin-top:6px">Concorrentes citados: <span>${d.names.join(', ')}</span></div>`
+      : isPlaceholder
+      ? `<div style="margin-top:6px"><span class="placeholder-tag">AGUARDANDO PRINTS</span></div>`
+      : '';
+    th += `<div class="detail-tool" style="--tc:${tc}">
+      <div class="detail-tool-name" style="color:${tc}">${d.tool}</div>
+      <div class="detail-tool-status">Maurício: <span style="color:${sc};font-weight:600">${si}</span></div>
+      <div class="detail-tool-names">${d.summary}</div>
+      ${nh}
     </div>`;
+  });
+  dc.innerHTML += `<div class="detail-card" id="detail-q${q.id}">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="font-size:12px;font-weight:700;color:${lc};background:${lc}1a;padding:2px 8px;border-radius:4px">P${q.id}</span>
+      <span class="query-level" style="color:${lc};background:${lc}1a">${q.level}</span>
+    </div>
+    <h3>${q.text}</h3>
+    <div class="detail-meta">Pesquisada nas 3 ferramentas em janela limpa</div>
+    ${th}
+  </div>`;
 });
 </script>
 </body>
